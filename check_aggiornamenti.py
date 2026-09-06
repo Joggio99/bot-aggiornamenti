@@ -146,7 +146,7 @@ def check_usp_reggio():
                 f"🔗 <a href='{full_url}'>Leggi l'avviso</a>"
             )
             send_telegram(msg)
-            send_email(subject="Nuova circolare Spallanzani", html_body=f"<p>{title}</p><p><a href='{full_url}'>Leggi qui</a></p>")
+            send_email(subject="Nuova notizia USP Reggio Emilia", html_body=f"<p>{title}</p><p><a href='{full_url}'>Leggi qui</a></p>")
             with open(cache_file, "w", encoding="utf-8") as f:
                 f.write(title)
             print(f"USP Reggio Emilia: inviata notifica per '{title}'")
