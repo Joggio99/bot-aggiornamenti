@@ -2,8 +2,8 @@ name: Controllo Aggiornamenti
 
 on:
   schedule:
-    # Esegue ogni 30 minuti dalle 06:00 alle 19:00 UTC dal lunedì al sabato
-    - cron: '*/30 6-19 * * 1-6'
+    # Esegue ogni 20 minuti
+    - cron: '*/20 * * * *'
   workflow_dispatch: # Consente di avviare il controllo manualmente con un clic
 
 jobs:
