@@ -2,13 +2,39 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+EMAIL_SENDER = os.environ.get("EMAIL_SENDER")
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
+EMAIL_RECEIVER = os.environ.get("EMAIL_RECEIVER")
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
+
+def send_email(subject, html_body):
+    if not (EMAIL_SENDER and EMAIL_PASSWORD and EMAIL_RECEIVER):
+        return
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_SENDER
+    msg["To"] = EMAIL_RECEIVER
+
+    part = MIMEText(html_body, "html")
+    msg.attach(part)
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD.replace(" ", ""))
+            server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
+        print(f"Email inviata con successo a {EMAIL_RECEIVER}")
+    except Exception as e:
+        print(f"Errore nell'invio dell'email: {e}")
 
 def send_telegram(text):
     if not BOT_TOKEN or not CHAT_ID:
@@ -67,6 +93,7 @@ def check_spallanzani():
                 f"🔗 <a href='{full_url}'>Leggi la circolare</a>"
             )
             send_telegram(msg)
+            send_email(subject="Nuova circolare Spallanzani", html_body=f"<p>{title}</p><p><a href='{full_url}'>Leggi qui</a></p>")
             with open(cache_file, "w", encoding="utf-8") as f:
                 f.write(title)
             print(f"Spallanzani: inviata notifica per '{title}'")
@@ -119,6 +146,7 @@ def check_usp_reggio():
                 f"🔗 <a href='{full_url}'>Leggi l'avviso</a>"
             )
             send_telegram(msg)
+            send_email(subject="Nuova circolare Spallanzani", html_body=f"<p>{title}</p><p><a href='{full_url}'>Leggi qui</a></p>")
             with open(cache_file, "w", encoding="utf-8") as f:
                 f.write(title)
             print(f"USP Reggio Emilia: inviata notifica per '{title}'")
