@@ -1,0 +1,38 @@
+name: Controllo Aggiornamenti
+
+on:
+  schedule:
+    # Esegue ogni 30 minuti dalle 06:00 alle 19:00 UTC dal lunedì al sabato
+    - cron: '*/30 6-19 * * 1-6'
+  workflow_dispatch: # Consente di avviare il controllo manualmente con un clic
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Serve per salvare il file con l'ultima circolare letta
+
+    steps:
+      - name: Scarica repository
+        uses: actions/checkout@v4
+
+      - name: Configura Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installa dipendenze
+        run: pip install requests beautifulsoup4
+
+      - name: Esegui controllo
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python check_aggiornamenti.py
+
+      - name: Salva stato ultimo aggiornamento
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --staged --quiet || (git commit -m "Aggiorna cache avvisi" && git push)
