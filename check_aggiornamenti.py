@@ -11,19 +11,24 @@ CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 EMAIL_SENDER = os.environ.get("EMAIL_SENDER")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 EMAIL_RECEIVER = os.environ.get("EMAIL_RECEIVER")
+EMAIL_RECEIVER_USP = os.environ.get("EMAIL_RECEIVER_USP")
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
 
-def send_email(subject, html_body):
-    if not (EMAIL_SENDER and EMAIL_PASSWORD and EMAIL_RECEIVER):
+def send_email(subject, html_body, receiver=None):
+    target = receiver or EMAIL_RECEIVER
+    if not (EMAIL_SENDER and EMAIL_PASSWORD and target):
         return
+
+    # Se il destinatario contiene più indirizzi separati da virgola
+    recipients = [r.strip() for r in target.split(",") if r.strip()]
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = EMAIL_SENDER
-    msg["To"] = EMAIL_RECEIVER
+    msg["To"] = ", ".join(recipients)
 
     part = MIMEText(html_body, "html")
     msg.attach(part)
@@ -31,8 +36,8 @@ def send_email(subject, html_body):
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(EMAIL_SENDER, EMAIL_PASSWORD.replace(" ", ""))
-            server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
-        print(f"Email inviata con successo a {EMAIL_RECEIVER}")
+            server.sendmail(EMAIL_SENDER, recipients, msg.as_string())
+        print(f"Email inviata con successo a {recipients}")
     except Exception as e:
         print(f"Errore nell'invio dell'email: {e}")
 
@@ -146,7 +151,14 @@ def check_usp_reggio():
                 f"🔗 <a href='{full_url}'>Leggi l'avviso</a>"
             )
             send_telegram(msg)
-            send_email(subject="Nuova notizia USP Reggio Emilia", html_body=f"<p>{title}</p><p><a href='{full_url}'>Leggi qui</a></p>")
+            destinatari_usp = EMAIL_RECEIVER
+            if EMAIL_RECEIVER_USP:
+                destinatari_usp = f"{EMAIL_RECEIVER}, {EMAIL_RECEIVER_USP}"
+                send_email(
+                    subject=f"USP Reggio Emilia - {title}",
+                    html_body=f"<p><b>Nuova pubblicazione USP Reggio Emilia</b></p><p>{title}</p><p><a href='{full_url}'>Leggi l'avviso completo</a></p>",
+                    receiver=destinatari_usp
+                )
             with open(cache_file, "w", encoding="utf-8") as f:
                 f.write(title)
             print(f"USP Reggio Emilia: inviata notifica per '{title}'")
