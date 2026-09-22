@@ -169,7 +169,7 @@ def check_usp_reggio():
 
 def main():
     check_spallanzani()
-    check_usp_reggio()
+    #check_usp_reggio()
 
 if __name__ == "__main__":
     main()
